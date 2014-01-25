@@ -1,7 +1,7 @@
 HeurekaRatingParser
 ===================
 
-Parser write in PHP language for online service heureka.sk
+Parser write in PHP language for online service heureka.sk and heureka.cz
 
 
 Example

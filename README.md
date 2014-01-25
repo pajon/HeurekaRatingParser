@@ -7,7 +7,9 @@ Parser write in PHP language for online service heureka.sk and heureka.cz
 Example
 =======
 ``` php
-$obj = new HeurekaParser("shop-name");
+
+// $lang = [sk|cz]
+$obj = new HeurekaParser("shop-name", $lang ='sk');
 
 // Return all ratings as array
 $obj->parseAll();

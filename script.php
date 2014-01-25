@@ -40,7 +40,7 @@ class HeurekaParser {
 
     function __construct($url, $lang = 'sk') {
         $this->shopUrl = $url;
-        $this->shopLang = $lang;
+        $this->shopLang = (in_array($lang, array('sk', 'cz')) ? $lang : 'sk');
 
         if ($url === null || $url == "")
             throw new Exception("URL cannot be empty");

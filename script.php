@@ -18,9 +18,29 @@ class Rating {
 class HeurekaParser {
 
     private $shopUrl;
+    private $shopLang;
+    private $lang = array(
+        'link' => array(
+            'sk' => 'http://obchody.heureka.sk/%s/recenze/',
+            'cz' => 'http://obchody.heureka.cz/%s/recenze/'
+        ),
+        'pagelink' => array(
+            'sk' => 'http://obchody.heureka.sk/%s/recenze/?f=%d',
+            'cz' => 'http://obchody.heureka.cz/%s/recenze/?f=%d'
+        ),
+        'rate' => array(
+            'sk' => '$Hodnotenie: ([0-9].[0-9])\nhviezdičky z 5$',
+            'cz' => '$Hodnocení: ([0-9].[0-9])\nhvězdičky z 5$'
+        ),
+        'lastpage' => array(
+            'sk' => 'Posledná stránka',
+            'cz' => 'Poslední stránka'
+        )
+    );
 
-    function __construct($url) {
+    function __construct($url, $lang = 'sk') {
         $this->shopUrl = $url;
+        $this->shopLang = $lang;
 
         if ($url === null || $url == "")
             throw new Exception("URL cannot be empty");
@@ -45,7 +65,7 @@ class HeurekaParser {
             return null;
 
 
-        preg_match('$Hodnotenie: ([0-9].[0-9])\nhviezdičky z 5$', $text->item($index)->nodeValue, $match);
+        preg_match($this->lang['rate'][$this->shopLang], $text->item($index)->nodeValue, $match);
         return $match[1];
     }
 
@@ -70,14 +90,14 @@ class HeurekaParser {
         $rates = array();
         $dom = new DOMDocument('1.0', 'UTF-8');
 
-        $link = sprintf("http://obchody.heureka.sk/%s/recenze/", $this->shopUrl);
+        $link = sprintf($this->lang['link'][$this->shopLang], $this->shopUrl);
 
         @$dom->loadHTML($this->getUrlData($link));
 
         $xpath = new DOMXpath($dom);
 
 
-        $maxPage = $xpath->query('//a[@title="Posledná stránka"]')->item(0)->nodeValue;
+        $maxPage = $xpath->query('//a[@title="'.$this->lang['lastpage'][$this->shopLang].'"]')->item(0)->nodeValue;
 
         for ($i = 1; $i <= $maxPage; $i++) {
             $rates = array_merge($rates, $this->parsePage($i));
@@ -91,9 +111,7 @@ class HeurekaParser {
 
         $dom = new DOMDocument('1.0', 'UTF-8');
 
-        $link = sprintf("http://obchody.heureka.sk/%s/recenze/?f=%d", $this->shopUrl, $id);
-
-        @$dom->loadHTML($this->getUrlData($link));
+        @$dom->loadHTML($this->getUrlData(sprintf($this->lang['pagelink'][$this->shopLang], $this->shopUrl, $id)));
 
         $xpath = new DOMXpath($dom);
         $nodeList = $xpath->query('//div[@class="review"]');
@@ -103,10 +121,10 @@ class HeurekaParser {
             $rate->id = $this->getId($val->getAttribute('id'));
             $rate->date = explode(" ", $xpath->query('./div/p[@class="date"]', $val)->item(0)->nodeValue, 2)[1];
 
+            $obj = $xpath->query('./div[@class="revtext shoprev"]/h3[@class="eval"]/big', $val);
+            $rate->rating = ($obj->length > 0 ? $obj->item(0)->nodeValue : null);
+            
             $obj = $xpath->query('./div/ul[@class="stars"]/li[not(@class)]/span[@class="rating"]/span[@class="hidden"]', $val);
-
-
-            $rate->rating = $xpath->query('./div[@class="revtext shoprev"]/h3[@class="eval"]/big', $val)->item(0)->nodeValue;
             $rate->rateDeliver = $this->getRate($obj, 0);
             $rate->rateTransparency = $this->getRate($obj, 1);
             $rate->rateQuality = $this->getRate($obj, 2);
@@ -130,3 +148,7 @@ class HeurekaParser {
     }
 
 }
+
+$obj = new HeurekaParser("agen-cz", "cz");
+
+var_dump($obj->parseAll());

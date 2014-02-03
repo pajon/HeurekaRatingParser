@@ -130,7 +130,8 @@ class HeurekaParser {
             $rate->rateQuality = $this->getRate($obj, 2);
             $rate->comment = $this->getComment($xpath->query('./div[@class="revtext shoprev"]/p', $val));
 
-            $rate->user = $xpath->query('./div/p/strong', $val)->item(0)->nodeValue;
+            $userObj = $xpath->query('./div/p/strong', $val);
+            $rate->user = ($userObj->length > 0 ? $userObj->item(0)->nodeValue : null);
 
 
             foreach ($xpath->query('./div/div[@class="plus"]/ul/li', $val) as $node) {
@@ -148,7 +149,3 @@ class HeurekaParser {
     }
 
 }
-
-$obj = new HeurekaParser("agen-cz", "cz");
-
-var_dump($obj->parseAll());
